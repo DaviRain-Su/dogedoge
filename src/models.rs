@@ -4,17 +4,18 @@ use tokio::sync::Mutex;
 
 /// So we don't have to tackle how different database work, we'll just use
 /// a simple in-memory DB, a vector synchronized by a mutex.
-pub type Db = Arc<Mutex<Vec<Todo>>>;
+pub type Db = Arc<Mutex<Vec<Register>>>;
 
 pub fn blank_db() -> Db {
     Arc::new(Mutex::new(Vec::new()))
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Todo {
+pub struct Register {
     pub id: u64,
-    pub text: String,
-    pub completed: bool,
+    pub phone_number: String,
+    pub password: String,
+    pub web3_address: String,
 }
 
 // The query parameters for list_todos.

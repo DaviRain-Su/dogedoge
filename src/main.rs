@@ -10,28 +10,28 @@ mod models;
 #[cfg(test)]
 mod tests;
 
-/// Provides a RESTful web server managing some Todos.
+/// Provides a RESTful web server managing some Registers.
 ///
 /// API will be:
 ///
-/// - `GET /todos`: return a JSON list of Todos.
-/// - `POST /todos`: create a new Todo.
-/// - `PUT /todos/:id`: update a specific Todo.
-/// - `DELETE /todos/:id`: delete a specific Todo.
+/// - `GET /Registers`: return a JSON list of Registerso.
+/// - `POST /Registers`: create a new Register.
+/// - `PUT /Registers/:id`: update a specific Register.
+/// - `DELETE /Registers/:id`: delete a specific Register.
 #[tokio::main]
 async fn main() {
     if env::var_os("RUST_LOG").is_none() {
-        // Set `RUST_LOG=todos=debug` to see debug logs,
+        // Set `RUST_LOG=registers=debug` to see debug logs,
         // this only shows access logs.
-        env::set_var("RUST_LOG", "todos=info");
+        env::set_var("RUST_LOG", "registers=info");
     }
     pretty_env_logger::init();
 
     let db = models::blank_db();
 
-    let api = filters::todos(db);
+    let api = filters::registers(db);
 
-    // View access logs by setting `RUST_LOG=todos`.
+    // View access logs by setting `RUST_LOG=Registers`.
     let routes = api.with(warp::log("todos"));
     // Start up the server...
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
