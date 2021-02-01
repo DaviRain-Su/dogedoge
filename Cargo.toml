@@ -9,7 +9,21 @@ edition = "2018"
 [dependencies]
 tokio = {version = "1", features = ["full"]}
 warp = "0.3.0"
+
+#log support
 pretty_env_logger = "*"
-log = "*"
-serde = "*"
-serde_derive = "*"
+log = "0.4"
+fast_log="1.3"
+
+#json support
+serde = { version = "1.0", features = ["derive"] }
+serde_derive = "1.0"
+
+#datatime support
+chrono = {version = "0.4", features = ["serde"]}
+
+#rbatis support
+rbatis = { version = "1.8" }
+
+lazy_static = "1.4.0"
+uuid = "0.8"

@@ -1,11 +1,17 @@
-#![deny(warnings)]
+// #![deny(warnings)]
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate rbatis;
 
 use std::env;
 use warp::Filter;
 
 mod filters;
 mod handlers;
-mod models;
+mod db;
+
+use db::init_rbatis;
 
 #[cfg(test)]
 mod tests;
@@ -27,9 +33,11 @@ async fn main() {
     }
     pretty_env_logger::init();
 
-    let db = models::blank_db();
 
-    let api = filters::registers(db);
+    let db = init_rbatis().await;
+
+
+    let api = filters::registers(db.clone());
 
     // View access logs by setting `RUST_LOG=Registers`.
     let routes = api.with(warp::log("registers"));

@@ -1,9 +1,11 @@
 use super::handlers;
-use super::models::{Db, ListOptions, Register};
+use super::db::{ ListOptions, Register};
 use warp::Filter;
-
+use rbatis::rbatis::Rbatis;
+// use std::rc::Rc;
+use std::sync::Arc;
 /// The 4 registers filters combined.
-pub fn registers(db: Db) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+pub fn registers(db: Arc<Rbatis>) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     register_list(db.clone())
         .or(register_create(db.clone()))
         .or(register_update(db.clone()))
@@ -12,7 +14,7 @@ pub fn registers(db: Db) -> impl Filter<Extract = impl warp::Reply, Error = warp
 
 /// GET /registers?offset=3&limit=5
 pub fn register_list(
-    db: Db,
+    db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path!("register")
         .and(warp::get())
@@ -23,7 +25,7 @@ pub fn register_list(
 
 /// POST /register with JSON body
 pub fn register_create(
-    db: Db,
+    db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path!("register")
         .and(warp::post())
@@ -34,7 +36,7 @@ pub fn register_create(
 
 /// PUT /registers/:id with JSON body
 pub fn register_update(
-    db: Db,
+    db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path!("register" / u64)
         .and(warp::put())
@@ -45,7 +47,7 @@ pub fn register_update(
 
 /// DELETE /registers/:id
 pub fn register_delete(
-    db: Db,
+    db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     // We'll make one of our endpoints admin-only to show how authentication filters are used
     let admin_only = warp::header::exact("authorization", "Bearer admin");
@@ -61,7 +63,7 @@ pub fn register_delete(
         .and_then(handlers::delete_register)
 }
 
-fn with_db(db: Db) -> impl Filter<Extract = (Db,), Error = std::convert::Infallible> + Clone {
+fn with_db(db: Arc<Rbatis>) -> impl Filter<Extract = (Arc<Rbatis>,), Error = std::convert::Infallible> + Clone {
     warp::any().map(move || db.clone())
 }
 
