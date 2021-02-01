@@ -36,7 +36,6 @@ async fn main() {
 
     let db = init_rbatis().await;
 
-
     let api = filters::registers(db.clone());
 
     // View access logs by setting `RUST_LOG=Registers`.

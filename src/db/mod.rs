@@ -70,8 +70,6 @@ pub struct ListOptions {
 }
 
 
-
-
 pub const MYSQL_URL: &str = "mysql://root:123456@47.98.193.249:3306/user";
 
 lazy_static!{
