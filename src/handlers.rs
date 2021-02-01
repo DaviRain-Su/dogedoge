@@ -13,12 +13,15 @@ use std::sync::Arc;
 pub async fn list_register(_opts: ListOptions, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
     log::debug!("list_register");
 
-    let registers: Vec<RegisterDB> = db.list("").await.unwrap();
-    let registers : Vec<Register> = registers.into_iter().map(|val| {
-        Register::from(val)
-    }).collect();
-
-    Ok(warp::reply::json(&registers))
+    let registers = db.list("").await;
+    if registers.is_err() {
+        Ok(warp::reply::json(&Vec::<Register>::new()))
+    }else {
+        let registers : Vec<Register> = registers.unwrap().into_iter().map(|val| {
+            Register::from(val)
+        }).collect();
+        Ok(warp::reply::json(&registers))
+    }
 }
 
 pub async fn create_register(create: Register, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {

@@ -1,0 +1,7 @@
+# PUT
+curl -v  -H "Content-Type:application/json" -X PUT --data '{"id":1, "phone_number":"17366503261", "password":"123456", "web3_address":"1234567890"}' http://localhost:3030/register/1
+# POST
+curl -H "Content-Type:application/json" -X POST --data '{"id":1, "phone_number":"17366503261", "password":"123456", "web3_address":"1234567890"}' http://localhost:3030/register
+# GET
+curl -H "Content-Type:application/json" -X GET http://localhost:3030/register
+# DELETE
