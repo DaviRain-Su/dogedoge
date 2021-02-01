@@ -32,7 +32,7 @@ async fn main() {
     let api = filters::registers(db);
 
     // View access logs by setting `RUST_LOG=Registers`.
-    let routes = api.with(warp::log("todos"));
+    let routes = api.with(warp::log("registers"));
     // Start up the server...
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
