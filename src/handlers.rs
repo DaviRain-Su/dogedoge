@@ -26,21 +26,21 @@ pub async fn create_register(create: Register, db: Arc<Rbatis>) -> Result<impl w
     let create_register_db = RegisterDB::from(create.clone());
 
     let create_id = create.id;
-    let ret_create_register_db  = db.fetch_by_id::<Option<RegisterDB>>("", &create_id.to_string()).await.unwrap();
+    let ret_create_register_db  = db.fetch_by_id::<Option<RegisterDB>>("", &create_id.to_string()).await;
     match ret_create_register_db {
-        Some(res) => {
-            if res.id ==  create_register_db.id {
-                log::debug!("    -> id already exists: {}", create_id);
-                return Ok(StatusCode::BAD_REQUEST);
-            }
-        },
-        None => {
+        Err(_err) => {
             let r = db.save("", &create_register_db).await;
             if r.is_err() {
                 log::debug!("create_resister: {}", r.err().unwrap().to_string());
             }
+        },
+        Ok(res) => {
+            if res.unwrap().id == create_register_db.id {
+                log::debug!("    -> id already exists: {}", create_id);
+                return Ok(StatusCode::BAD_REQUEST);
+            }
         }
-    };
+    }
     Ok(StatusCode::CREATED)
 }
 
