@@ -1,0 +1,46 @@
+
+
+## POST 增
+
+curl -H "Content-Type:application/json" -X POST --data '{"id":1, "text":"davirain", "completed":false}' http://localhost:3030/todos
+
+## GET 查
+
+curl -H "Content-Type:application/json" -X GET http://localhost:3030/todos
+
+## PUT 改 
+
+curl -H "Content-Type:application/json" -X PUT --data '{"id":3, "text":"suyinrong", "completed":false}' http://localhost:3030/todos/3
+
+## DELETE 删
+
+curl -v  -H "Content-Type:application/json" -H "authorization:Bearer admin"  -X DELETE  http://localhost:3030/todos/1
+
+
+
+
+
+## POST 
+
+### create1
+
+curl -v  -H "Content-Type:application/json" -X POST --data '{"id":1, "phone_number":"17366503261", "password":"123456", "web3_address": "12bzRJfh7arnnfPPUZHeJUaE62QLEwhK48QnH9LXeK2m1iZU"}' http://localhost:3030/register
+
+### create2
+
+curl -v  -H "Content-Type:application/json" -X POST --data '{"id":2, "phone_number":"17366503261", "password":"111111", "web3_address": "hdshhshdshdhhbcsbcdbcsdbcskcbsdcbsbcksd"}' http://localhost:3030/register
+
+## GET
+
+curl -v -H "Content-Type:application/json" -X GET http://localhost:3030/register
+
+## PUT 
+
+curl -v  -H "Content-Type:application/json" -X PUT --data '{"id":1, "phone_number":"17366503261", "password":"654321", "web3_address": "12bzRJfh7arnnfPPUZHeJUaE62QLEwhK48QnH9LXeK2m1iZU"}' http://localhost:3030/register/1
+
+## DELETE
+
+curl -v  -H "Content-Type:application/json" -H "authorization:Bearer admin"  -X DELETE  http://localhost:3030/register/1
+
+
+

@@ -12,14 +12,14 @@ use std::sync::Arc;
 
 #[crud_enable]
 #[derive(Clone, Debug)]
-pub struct RegisterDB {
+pub struct RegistersDB {
     pub id: Option<String>,
     pub phone_number: Option<String>,
     pub password: Option<String>,
     pub web3_address: Option<String>,
 }
 
-impl RegisterDB {
+impl RegistersDB {
     pub fn from(register: Register) -> Self {
         Self {
             id: Some(register.id.to_string()),
@@ -52,7 +52,7 @@ pub struct Register {
 }
 
 impl Register {
-    pub fn from(register_db: RegisterDB) -> Self {
+    pub fn from(register_db: RegistersDB) -> Self {
         Self {
             id: register_db.id.unwrap().parse::<u64>().unwrap(),
             phone_number: register_db.phone_number.unwrap(),
