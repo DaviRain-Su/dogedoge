@@ -1,24 +1,56 @@
-## POST
 
-### create1
 
-curl -v  -H "Content-Type:application/json" -X POST --data '{"id":1, "phone_number":"17366503261", "password":"123456", "web3_address": "12bzRJfh7arnnfPPUZHeJUaE62QLEwhK48QnH9LXeK2m1iZU"}' http://localhost:3030/register
+## POST 
 
-### create2
+# 注册
 
-curl -v  -H "Content-Type:application/json" -X POST --data '{"id":2, "phone_number":"17366503261", "password":"111111", "web3_address": "hdshhshdshdhhbcsbcdbcsdbcskcbsdcbsbcksd"}' http://localhost:3030/register
+### 注册用户1
 
-## GET
+curl -v  -H "Content-Type:application/json" -X POST --data '{"id":1, "uuid": "239934993493", "phone_number":"17366503261", "password":"123456", "web3_address": "12bzRJfh7arnnfPPUZHeJUaE62QLEwhK48QnH9LXeK2m1iZU", "sign_time":"2020-1-1", "login_time":"2020-1-2"}'  http://localhost:3030/register
 
-curl -v -H "Content-Type:application/json" -X GET http://localhost:3030/register
+### 注册用户2
 
-## PUT 
+curl -v  -H "Content-Type:application/json" -X POST --data '{"id":2, "uuid": "239934993493", "phone_number":"17366503261", "password":"111111", "web3_address": "hdshhshdshdhhbcsbcdbcsdbcskcbsdcbsbcksd", "sign_time":"2020-1-1", "login_time":"2020-1-2" }' http://localhost:3030/register
 
-curl -v  -H "Content-Type:application/json" -X PUT --data '{"id":1, "phone_number":"17366503261", "password":"654321", "web3_address": "12bzRJfh7arnnfPPUZHeJUaE62QLEwhK48QnH9LXeK2m1iZU"}' http://localhost:3030/register/1
+# 登录
+
+## 登录方式1
+
+curl -v  -H "Content-Type:application/json" -X POST --data '{"uuid":"239934993493", "password":"123456"}'  http://localhost:3030/register
+
+## 登录方式2
+
+curl -v  -H "Content-Type:application/json" -X POST --data '{"phone_number":"17366503261", "password":"123456"}'  http://localhost:3030/register
+
+# 更新信息
+
+## 更新手机号
+
+curl -v  -H "Content-Type:application/json" -X PUT --data '{"id":1, "uuid": "239934993493", "phone_number":"1025185920", "password":"123456", "web3_address": "12bzRJfh7arnnfPPUZHeJUaE62QLEwhK48QnH9LXeK2m1iZU", "sign_time":"2020-1-1", "login_time":"2020-1-2"}' http://localhost:3030/user/phonenumber/1
+
+## 更新web3 地址
+
+curl -v  -H "Content-Type:application/json" -X PUT --data '{"id":1, "uuid": "239934993493", "phone_number":"1025185920", "password":"123456", "web3_address": "12bzRJfh7arnnfPPUZHeJUaE62QLEwhK48QnH9LXedavirain", "sign_time":"2020-1-1", "login_time":"2020-1-2"}' http://localhost:3030/user/web3address/1
+
+## 更新密码
+
+curl -v  -H "Content-Type:application/json" -X PUT --data '{"id":1, "uuid": "239934993493", "phone_number":"1025185920", "password":"654321", "web3_address": "12bzRJfh7arnnfPPUZHeJUaE62QLEwhK48QnH9LXedavirain", "sign_time":"2020-1-1", "login_time":"2020-1-2"}' http://localhost:3030/user/password/1
+
+
+
+
+
+## GET 拿到所有账户
+
+curl -v -H "Content-Type:application/json" -X GET http://localhost:3030/users
+
+
+
+----
 
 ## DELETE
 
-curl -v  -H "Content-Type:application/json" -H "authorization:Bearer admin"  -X DELETE  http://localhost:3030/register/1
+curl -v  -H "Content-Type:application/json" -H "authorization:Bearer admin"  -X DELETE  http://localhost:3030/users/1
 
 
 

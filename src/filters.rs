@@ -16,6 +16,7 @@ pub fn main_logic(
         .or(update_password(db.clone())) // 更新密码
         .or(update_web3_address(db.clone())) // 更新web3地址
         .or(update_phone_number(db.clone())) // 更新手机号
+        .or(user_list(db.clone()))
         .or(delete_user(db))
 }
 
@@ -71,7 +72,7 @@ pub fn update_password(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     // let router = String::from("update-password");
-    warp::path!("user" / u64)
+    warp::path!("user" / "password" /u64)
         .and(warp::put())
         .and(json_body())
         .and(with_db(db))
@@ -84,7 +85,7 @@ pub fn update_web3_address(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     // let router = String::from("update-web3-address");
-    warp::path!("user" / u64)
+    warp::path!("user" / "web3address" / u64)
         .and(warp::put())
         .and(json_body())
         .and(with_db(db))
@@ -97,25 +98,12 @@ pub fn update_phone_number(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     // let router = String::from("update-phone-number");
-    warp::path!("user" / u64)
+    warp::path!("user"/ "phonenumber" / u64)
         .and(warp::put())
         .and(json_body())
         .and(with_db(db))
         .and_then(handlers::update_user)
 }
-
-// // 更新用户
-// /// PUT /router/:id with JSON body
-// fn update_user(
-//     router: &str,
-//     db: Arc<Rbatis>,
-// ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-//     warp::path!(router / u64)
-//         .and(warp::put())
-//         .and(json_body())
-//         .and(with_db(db))
-//         .and_then(handlers::update_user)
-// }
 
 // 删除用户
 /// DELETE /user/:id
