@@ -67,7 +67,7 @@ pub fn register(
 }
 
 // 更新密码
-/// PUT /registers/:id with JSON body
+/// PUT /user/password/:id with JSON body
 pub fn update_password(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -80,7 +80,7 @@ pub fn update_password(
 }
 
 // 更新地址
-/// PUT /registers/:id with JSON body
+/// PUT /user/web3address/:id with JSON body
 pub fn update_web3_address(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -93,7 +93,7 @@ pub fn update_web3_address(
 }
 
 // 更新手机号
-/// PUT /registers/:id with JSON body
+/// PUT /user/phonenumber/:id with JSON body
 pub fn update_phone_number(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
