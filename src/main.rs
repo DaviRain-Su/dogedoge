@@ -7,9 +7,9 @@ extern crate rbatis;
 use std::env;
 use warp::Filter;
 
+mod db;
 mod filters;
 mod handlers;
-mod db;
 
 use db::init_rbatis;
 
@@ -32,7 +32,6 @@ async fn main() {
         env::set_var("RUST_LOG", "registers=info");
     }
     pretty_env_logger::init();
-
 
     let db = init_rbatis().await;
 
