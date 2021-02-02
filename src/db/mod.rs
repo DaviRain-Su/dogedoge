@@ -43,7 +43,7 @@ pub async fn init_rbatis() -> Arc<Rbatis>{
 
 /// So we don't have to tackle how different database work, we'll just use
 /// a simple in-memory DB, a vector synchronized by a mutex.
-#[derive(Debug, Deserialize, Serialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone, std::cmp::PartialEq)]
 pub struct Register {
     pub id: u64,
     pub phone_number: String,

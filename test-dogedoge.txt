@@ -1,26 +1,4 @@
-
-
-## POST 增
-
-curl -H "Content-Type:application/json" -X POST --data '{"id":1, "text":"davirain", "completed":false}' http://localhost:3030/todos
-
-## GET 查
-
-curl -H "Content-Type:application/json" -X GET http://localhost:3030/todos
-
-## PUT 改 
-
-curl -H "Content-Type:application/json" -X PUT --data '{"id":3, "text":"suyinrong", "completed":false}' http://localhost:3030/todos/3
-
-## DELETE 删
-
-curl -v  -H "Content-Type:application/json" -H "authorization:Bearer admin"  -X DELETE  http://localhost:3030/todos/1
-
-
-
-
-
-## POST 
+## POST
 
 ### create1
 

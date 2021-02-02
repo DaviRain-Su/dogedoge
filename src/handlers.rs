@@ -9,6 +9,36 @@ use rbatis::rbatis::Rbatis;
 use rbatis::crud::CRUD;
 use std::sync::Arc;
 
+// //登录查询操作
+// pub async fn login(login: Register, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
+//     log::debug!("login: {:?}", login);
+//     // let login_user_db = RegistersDB::from(login.clone());
+//
+//     let login_id = login.id;
+//     let ret_login_user_db = db.fetch_by_id::<Option<RegistersDB>>("", &login_id.to_string()).await;
+//     match ret_login_user_db {
+//         Err(_err) => {
+//             log::debug!("login error, fetch by id error");
+//             return Ok(StatusCode::BAD_REQUEST);
+//         },
+//         Ok(res) => {
+//             match res {
+//                 Some(some) => {
+//                     let ret_register = Register::from(some);
+//                     if ret_register == login {
+//                         return Ok(StatusCode::OK);
+//                     }
+//                 },
+//                 None => {
+//                     log::debug!("login error, not found register");
+//                     return Ok(StatusCode::BAD_REQUEST);
+//                 }
+//             }
+//         }
+//     }
+//     // 登录成功返回 200 OK
+//     Ok(StatusCode::OK)
+// }
 
 pub async fn list_register(_opts: ListOptions, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
     log::debug!("list_register");
@@ -24,7 +54,9 @@ pub async fn list_register(_opts: ListOptions, db: Arc<Rbatis>) -> Result<impl w
     }
 }
 
+// 创建用户
 pub async fn create_register(create: Register, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
+    // 用户请求的合法性判断
     log::debug!("create_register: {:?}", create);
     let create_register_db = RegistersDB::from(create.clone());
 
@@ -39,6 +71,7 @@ pub async fn create_register(create: Register, db: Arc<Rbatis>) -> Result<impl w
                 Some(some) => {
                     if some.id == create_register_db.id {
                         log::debug!("    -> id already exists: {}", create_id);
+                        // create failed return StatusCode::BAD_REQUEST(400)
                         return Ok(StatusCode::BAD_REQUEST);
                     }
                 },
@@ -51,9 +84,11 @@ pub async fn create_register(create: Register, db: Arc<Rbatis>) -> Result<impl w
             }
         }
     }
+    // create success return StatusCode::CREATED(200)
     Ok(StatusCode::CREATED)
 }
 
+// 更新用户
 pub async fn update_register(id: u64, update: Register, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
     log::debug!("update_register: id={}, register={:?}", id, update);
 
@@ -72,6 +107,7 @@ pub async fn update_register(id: u64, update: Register, db: Arc<Rbatis>) -> Resu
     }
 }
 
+// 删除用户
 pub async fn delete_register(id: u64, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
     log::debug!("delete_register: id={}", id);
 

@@ -2,14 +2,24 @@ use super::handlers;
 use super::db::{ ListOptions, Register};
 use warp::Filter;
 use rbatis::rbatis::Rbatis;
-// use std::rc::Rc;
 use std::sync::Arc;
+
+
 /// The 4 registers filters combined.
 pub fn registers(db: Arc<Rbatis>) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     register_list(db.clone())
         .or(register_create(db.clone()))
         .or(register_update(db.clone()))
         .or(register_delete(db))
+}
+
+/// GET /login
+pub fn login(db: Arc<Rbatis>) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("login")
+        .and(warp::get())
+        .and(warp::query::<ListOptions>())
+        .and(with_db(db))
+        .and_then(handlers::list_register)
 }
 
 /// GET /registers?offset=3&limit=5
