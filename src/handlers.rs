@@ -8,16 +8,17 @@ use rbatis::rbatis::Rbatis;
 use rbatis::Error;
 use std::convert::Infallible;
 use std::sync::Arc;
-use warp::http::StatusCode;
+use warp::http;
 
 pub async fn list_user(
     _opts: ListOptions,
     db: Arc<Rbatis>,
 ) -> Result<impl warp::Reply, Infallible> {
-    log::debug!("list_register");
+    log::debug!("list_user");
 
     let registers = db.list("").await;
     if registers.is_err() {
+        log::debug!("user is empty!");
         Ok(warp::reply::json(&Vec::<Register>::new()))
     } else {
         let registers: Vec<Register> = registers
@@ -25,6 +26,7 @@ pub async fn list_user(
             .into_iter()
             .map(|val| Register::from(val))
             .collect();
+        log::debug!("users is {:?}", registers);
         Ok(warp::reply::json(&registers))
     }
 }
@@ -35,29 +37,49 @@ pub async fn login_by_uuid(par: Login1, db: Arc<Rbatis>) -> Result<impl warp::Re
 }
 
 // login by Login2
-pub async fn login_by_phone_number(par: Login2, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
+pub async fn login_by_phone_number(
+    par: Login2,
+    db: Arc<Rbatis>,
+) -> Result<impl warp::Reply, Infallible> {
     login(Login::LOGIN2(par), db.clone()).await
 }
 
 async fn login(login: Login, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
     match login {
         Login::LOGIN1(Login1 { uuid, password }) => {
+            log::debug!("uuid = {}, password = {}", uuid, password);
             let w = db.new_wrapper().eq("uuid", &uuid);
             let r: Result<Option<RegistersDB>, Error> = db.fetch_by_wrapper("", &w).await;
             match r {
-                Err(_) => {
-                    log::debug!("login error: search none thing by uuid");
-                    return Ok(StatusCode::BAD_REQUEST);
+                Err(_err) => {
+                    log::debug!("login error[{:?}]: search none thing by uuid", _err);
+                    return Ok(warp::reply::with_status(
+                        "login error: search none thing by uuid",
+                        http::StatusCode::BAD_REQUEST,
+                    ));
                 }
                 Ok(some) => match some {
                     None => {
                         log::debug!("login error: search result is None value by uuid");
-                        return Ok(StatusCode::BAD_REQUEST);
+                        return Ok(warp::reply::with_status(
+                            "login error: search result is None value by uuid",
+                            http::StatusCode::BAD_REQUEST,
+                        ));
                     }
                     Some(res) => {
+                        log::debug!("register db = {:?}", res);
                         if res.password.unwrap() == password {
                             log::debug!("login success");
-                            return Ok(StatusCode::OK);
+                            return Ok(warp::reply::with_status(
+                                "PASSWORD SUCCEESS",
+                                http::StatusCode::OK,
+                            ));
+                        } else {
+                            log::debug!("login failed");
+                            return Ok(warp::reply::with_status(
+                                "PASSWORD ERROR",
+                                http::StatusCode::NOT_FOUND,
+                            ));
                         }
                     }
                 },
@@ -70,26 +92,41 @@ async fn login(login: Login, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infall
             let w = db.new_wrapper().eq("phone_number", &phone_number);
             let r: Result<Option<RegistersDB>, Error> = db.fetch_by_wrapper("", &w).await;
             match r {
-                Err(_) => {
-                    log::debug!("login error: search none thing by uuid");
-                    return Ok(StatusCode::BAD_REQUEST);
+                Err(_err) => {
+                    log::debug!("login error[{:?}]: search none thing by uuid", _err);
+                    return Ok(warp::reply::with_status(
+                        "login error: search none thing by uuid",
+                        http::StatusCode::BAD_REQUEST,
+                    ));
                 }
                 Ok(some) => match some {
                     None => {
                         log::debug!("login error: search result is None value by uuid");
-                        return Ok(StatusCode::BAD_REQUEST);
+                        return Ok(warp::reply::with_status(
+                            "login error: search result is None value by uuid",
+                            http::StatusCode::BAD_REQUEST,
+                        ));
                     }
                     Some(res) => {
+                        log::debug!("register db = {:?}", res);
                         if res.password.unwrap() == password {
                             log::debug!("login success");
-                            return Ok(StatusCode::OK);
+                            return Ok(warp::reply::with_status(
+                                "PASSWORD SUCCEESS",
+                                http::StatusCode::OK,
+                            ));
+                        } else {
+                            log::debug!("login failed");
+                            return Ok(warp::reply::with_status(
+                                "PASSWORD ERROR",
+                                http::StatusCode::NOT_FOUND,
+                            ));
                         }
                     }
                 },
             }
         }
     }
-    Ok(StatusCode::OK)
 }
 
 // 创建用户
@@ -105,34 +142,51 @@ pub async fn create_user(
     let w = db.new_wrapper().eq("id", &create_id.to_string());
     let ret_create_register_db: Result<Option<RegistersDB>, Error> =
         db.fetch_by_wrapper("", &w).await;
-    // let ret_create_register_db  = db.fetch_by_id::<Option<RegistersDB>>("", &create_id.to_string()).await;
+
     match ret_create_register_db {
         Err(_err) => {
             log::debug!("search register by id error ");
+            return Ok(warp::reply::with_status(
+                "search register by id error",
+                http::StatusCode::BAD_REQUEST,
+            ));
         }
-        Ok(res) => {
-            match res {
-                Some(some) => {
-                    if some.id == create_register_db.id
-                        || some.phone_number == create_register_db.phone_number
-                        || some.web3_address == create_register_db.web3_address
-                    {
-                        log::debug!("    -> id already exists: {}", create_id);
-                        // create failed return StatusCode::BAD_REQUEST(400)
-                        return Ok(StatusCode::BAD_REQUEST);
-                    }
-                }
-                None => {
-                    let r = db.save("", &create_register_db).await;
-                    if r.is_err() {
-                        log::debug!("create_resister: {}", r.err().unwrap().to_string());
-                    }
+        Ok(res) => match res {
+            Some(some)
+                if some.id == create_register_db.id
+                    || some.phone_number == create_register_db.phone_number
+                    || some.web3_address == create_register_db.web3_address =>
+            {
+                log::debug!("    -> id already exists: {}", create_id);
+
+                return Ok(warp::reply::with_status(
+                    "user already exists",
+                    http::StatusCode::BAD_REQUEST,
+                ));
+            }
+            None => {
+                let r = db.save("", &create_register_db).await;
+                if r.is_err() {
+                    log::debug!("create_resister: {}", r.err().unwrap().to_string());
+                    return Ok(warp::reply::with_status(
+                        "create user failed",
+                        http::StatusCode::NOT_FOUND,
+                    ));
+                } else {
+                    return Ok(warp::reply::with_status(
+                        "create user success",
+                        http::StatusCode::OK,
+                    ));
                 }
             }
-        }
+            _ => {
+                return Ok(warp::reply::with_status(
+                    "cann assess",
+                    http::StatusCode::NOT_FOUND,
+                ));
+            }
+        },
     }
-    // create success return StatusCode::CREATED(200)
-    Ok(StatusCode::CREATED)
 }
 
 // 更新用户
@@ -148,12 +202,18 @@ pub async fn update_user(
     match update_id {
         Ok(update_id) => {
             log::debug!("update register, res: {}, id : {}", update_id, id);
-            Ok(StatusCode::OK)
+            Ok(warp::reply::with_status(
+                "update success",
+                http::StatusCode::OK,
+            ))
         }
         Err(_err) => {
             // If the for loop didn't return OK, then the ID doesn't exist...
             log::debug!("    -> register id not found!");
-            Ok(StatusCode::NOT_FOUND)
+            Ok(warp::reply::with_status(
+                "user id not found",
+                http::StatusCode::NOT_FOUND,
+            ))
         }
     }
 }
@@ -165,12 +225,18 @@ pub async fn delete_user(id: u64, db: Arc<Rbatis>) -> Result<impl warp::Reply, I
     let delete_id = db.remove_by_id::<RegistersDB>("", &id.to_string()).await;
     match delete_id {
         Ok(delete_id) => {
-            log::debug!("delete_register: ret: {}, id: {}", delete_id, id);
-            Ok(StatusCode::NO_CONTENT)
+            log::debug!("delete_user: ret: {}, id: {}", delete_id, id);
+            Ok(warp::reply::with_status(
+                "delete user success",
+                http::StatusCode::OK,
+            ))
         }
         Err(_err) => {
-            log::debug!("    -> register id not found!");
-            Ok(StatusCode::NOT_FOUND)
+            log::debug!("    -> user id not found!");
+            Ok(warp::reply::with_status(
+                "user id not found!",
+                http::StatusCode::NOT_FOUND,
+            ))
         }
     }
 }
