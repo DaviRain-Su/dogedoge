@@ -36,7 +36,7 @@ async fn main() {
 
     let db = init_rbatis().await;
 
-    let api = filters::registers(db.clone());
+    let api = filters::main_logic(db.clone());
 
     // View access logs by setting `RUST_LOG=Registers`.
     let routes = api.with(warp::log("registers"));

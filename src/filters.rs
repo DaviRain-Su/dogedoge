@@ -6,11 +6,11 @@ use std::sync::Arc;
 
 
 /// The 4 registers filters combined.
-pub fn registers(db: Arc<Rbatis>) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    register_list(db.clone())
-        .or(register_create(db.clone()))
-        .or(register_update(db.clone()))
-        .or(register_delete(db))
+pub fn main_logic(db: Arc<Rbatis>) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    user_list(db.clone())
+        .or(register(db.clone()))
+        .or(update_user(db.clone()))
+        .or(delete_user(db))
 }
 
 /// GET /login
@@ -23,40 +23,40 @@ pub fn login(db: Arc<Rbatis>) -> impl Filter<Extract = impl warp::Reply, Error =
 }
 
 /// GET /registers?offset=3&limit=5
-pub fn register_list(
+pub fn user_list(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path!("register")
         .and(warp::get())
         .and(warp::query::<ListOptions>())
         .and(with_db(db))
-        .and_then(handlers::list_register)
+        .and_then(handlers::list_user)
 }
 
 /// POST /register with JSON body
-pub fn register_create(
+pub fn register(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path!("register")
         .and(warp::post())
         .and(json_body())
         .and(with_db(db))
-        .and_then(handlers::create_register)
+        .and_then(handlers::create_user)
 }
 
 /// PUT /registers/:id with JSON body
-pub fn register_update(
+pub fn update_user(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path!("register" / u64)
         .and(warp::put())
         .and(json_body())
         .and(with_db(db))
-        .and_then(handlers::update_register)
+        .and_then(handlers::update_user)
 }
 
 /// DELETE /registers/:id
-pub fn register_delete(
+pub fn delete_user(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     // We'll make one of our endpoints admin-only to show how authentication filters are used
@@ -70,7 +70,7 @@ pub fn register_delete(
         .and(admin_only)
         .and(warp::delete())
         .and(with_db(db))
-        .and_then(handlers::delete_register)
+        .and_then(handlers::delete_user)
 }
 
 fn with_db(db: Arc<Rbatis>) -> impl Filter<Extract = (Arc<Rbatis>,), Error = std::convert::Infallible> + Clone {
