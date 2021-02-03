@@ -147,7 +147,7 @@ pub async fn create_user(
         }
         Ok(res) => match res {
             Some(some)
-                if some.id == create_register_db.id
+                if some.id != create_register_db.id
                     && some.uuid == create_register_db.uuid
                     && some.phone_number == create_register_db.phone_number
                     && some.web3_address == create_register_db.web3_address =>

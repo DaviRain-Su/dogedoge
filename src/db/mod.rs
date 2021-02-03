@@ -25,7 +25,7 @@ pub struct RegistersDB {
 impl RegistersDB {
     pub fn from(register: Register) -> Self {
         Self {
-            id: Some(register.id.to_string()),
+            id: Some((register.id + 1).to_string()),
             uuid: Some(register.uuid),
             phone_number: Some(register.phone_number),
             password: Some(register.password),
