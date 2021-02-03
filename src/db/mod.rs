@@ -13,7 +13,7 @@ use std::sync::Arc;
 #[crud_enable]
 #[derive(Clone, Debug)]
 pub struct RegistersDB {
-    pub id: Option<String>,
+    // pub id: Option<String>,
     pub uuid: Option<String>,
     pub phone_number: Option<String>,
     pub password: Option<String>,
@@ -25,7 +25,7 @@ pub struct RegistersDB {
 impl RegistersDB {
     pub fn from(register: Register) -> Self {
         Self {
-            id: Some((register.id + 1).to_string()),
+            // id: None,
             uuid: Some(register.uuid),
             phone_number: Some(register.phone_number),
             password: Some(register.password),
@@ -48,9 +48,9 @@ pub async fn init_rbatis() -> Arc<Rbatis> {
 
 /// So we don't have to tackle how different database work, we'll just use
 /// a simple in-memory DB, a vector synchronized by a mutex.
+
 #[derive(Debug, Deserialize, Serialize, Clone, std::cmp::PartialEq)]
 pub struct Register {
-    pub id: u64,
     pub uuid: String,
     pub phone_number: String,
     pub password: String,
@@ -62,7 +62,7 @@ pub struct Register {
 impl Register {
     pub fn from(register_db: RegistersDB) -> Self {
         Self {
-            id: register_db.id.unwrap().parse::<u64>().unwrap(),
+            // id: register_db.id.unwrap().parse::<u64>().unwrap(),
             uuid: register_db.uuid.unwrap(),
             phone_number: register_db.phone_number.unwrap(),
             password: register_db.password.unwrap(),

@@ -1,11 +1,10 @@
+use rbatis::crud::CRUD;
 use warp::http::StatusCode;
 use warp::test::request;
-use rbatis::crud::CRUD;
 
 use super::{
-    filters,
     db::{self, Register, RegistersDB},
-    handlers,
+    filters, handlers,
 };
 
 #[tokio::test]
@@ -57,7 +56,6 @@ async fn test_update_phone_number() {
     let db = db::init_rbatis().await;
     let api = filters::main_logic(db.clone());
 
-
     let resp = request()
         .method("PUT")
         .path("/user/phonenumber/1")
@@ -82,7 +80,6 @@ async fn test_update_web3address() {
     let db = db::init_rbatis().await;
     let api = filters::main_logic(db.clone());
 
-
     let resp = request()
         .method("PUT")
         .path("/user/web3address/1")
@@ -106,7 +103,6 @@ async fn test_update_password() {
     let _ = pretty_env_logger::try_init();
     let db = db::init_rbatis().await;
     let api = filters::main_logic(db.clone());
-
 
     let resp = request()
         .method("PUT")

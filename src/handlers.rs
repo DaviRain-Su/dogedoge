@@ -133,9 +133,16 @@ pub async fn create_user(
 
     // 通过uuid唯一的标示
     let create_uuid = create.uuid;
-    let w = db.new_wrapper().eq("uuid", &create_uuid);
-    let ret_create_register_db: Result<Option<RegistersDB>, Error> =
-        db.fetch_by_wrapper("", &w).await;
+    let create_phone_number = create.phone_number;
+    let create_web3_address = create.web3_address;
+    let w = db
+        .new_wrapper()
+        .eq("uuid", &create_uuid)
+        .or()
+        .eq("phone_number", &create_phone_number)
+        .or()
+        .eq("web3_address", &create_web3_address);
+    let ret_create_register_db: Result<Vec<RegistersDB>, Error> = db.list_by_wrapper("", &w).await;
 
     match ret_create_register_db {
         Err(_err) => {
@@ -145,20 +152,8 @@ pub async fn create_user(
                 http::StatusCode::BAD_REQUEST,
             ));
         }
-        Ok(res) => match res {
-            Some(some)
-                if some.id != create_register_db.id
-                    && some.uuid == create_register_db.uuid
-                    && some.phone_number == create_register_db.phone_number
-                    && some.web3_address == create_register_db.web3_address =>
-            {
-                log::debug!("    -> id already exists: {}", create_uuid);
-                return Ok(get_response(
-                    "user already exists",
-                    http::StatusCode::BAD_REQUEST,
-                ));
-            }
-            None => {
+        Ok(res) => {
+            if res.is_empty() {
                 let r = db.save("", &create_register_db).await;
                 if r.is_err() {
                     log::debug!("create_resister: {}", r.err().unwrap().to_string());
@@ -167,13 +162,24 @@ pub async fn create_user(
                         http::StatusCode::NOT_FOUND,
                     ));
                 } else {
-                    return Ok(get_response("create user success", http::StatusCode::CREATED));
+                    return Ok(get_response(
+                        "create user success",
+                        http::StatusCode::CREATED,
+                    ));
                 }
+            } else {
+                log::debug!(
+                    "    -> id already exists (uuid :{}, phone number: {}, web3 address: {})",
+                    create_uuid,
+                    create_phone_number,
+                    create_web3_address
+                );
+                return Ok(get_response(
+                    "user already exists",
+                    http::StatusCode::BAD_REQUEST,
+                ));
             }
-            _ => {
-                return Ok(get_response("cannot assess", http::StatusCode::NOT_FOUND));
-            }
-        },
+        }
     }
 }
 
