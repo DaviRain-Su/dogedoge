@@ -8,7 +8,9 @@ use rbatis::rbatis::Rbatis;
 use rbatis::Error;
 use std::convert::Infallible;
 use std::sync::Arc;
-use warp::http;
+use warp::http::{self, StatusCode};
+use warp::reply::Response;
+use warp::Reply;
 
 pub async fn list_user(
     _opts: ListOptions,
@@ -19,7 +21,10 @@ pub async fn list_user(
     let registers = db.list("").await;
     if registers.is_err() {
         log::debug!("user is empty!");
-        Ok(warp::reply::json(&Vec::<Register>::new()))
+        Ok(get_response(
+            warp::reply::json(&Vec::<Register>::new()),
+            StatusCode::OK,
+        ))
     } else {
         let registers: Vec<Register> = registers
             .unwrap()
@@ -27,7 +32,7 @@ pub async fn list_user(
             .map(|val| Register::from(val))
             .collect();
         log::debug!("users is {:?}", registers);
-        Ok(warp::reply::json(&registers))
+        Ok(get_response(warp::reply::json(&registers), StatusCode::OK))
     }
 }
 
@@ -53,15 +58,15 @@ async fn login(login: Login, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infall
             match r {
                 Err(_err) => {
                     log::debug!("login error[{:?}]: search none thing by uuid", _err);
-                    return Ok(warp::reply::with_status(
+                    return Ok(get_response(
                         "login error: search none thing by uuid",
-                        http::StatusCode::BAD_REQUEST,
+                        StatusCode::BAD_REQUEST,
                     ));
                 }
                 Ok(some) => match some {
                     None => {
                         log::debug!("login error: search result is None value by uuid");
-                        return Ok(warp::reply::with_status(
+                        return Ok(get_response(
                             "login error: search result is None value by uuid",
                             http::StatusCode::BAD_REQUEST,
                         ));
@@ -70,16 +75,10 @@ async fn login(login: Login, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infall
                         log::debug!("register db = {:?}", res);
                         if res.password.unwrap() == password {
                             log::debug!("login success");
-                            return Ok(warp::reply::with_status(
-                                "PASSWORD SUCCEESS",
-                                http::StatusCode::OK,
-                            ));
+                            return Ok(get_response("PASSWORD SUCCEESS", http::StatusCode::OK));
                         } else {
                             log::debug!("login failed");
-                            return Ok(warp::reply::with_status(
-                                "PASSWORD ERROR",
-                                http::StatusCode::NOT_FOUND,
-                            ));
+                            return Ok(get_response("PASSWORD ERROR", http::StatusCode::NOT_FOUND));
                         }
                     }
                 },
@@ -94,7 +93,7 @@ async fn login(login: Login, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infall
             match r {
                 Err(_err) => {
                     log::debug!("login error[{:?}]: search none thing by uuid", _err);
-                    return Ok(warp::reply::with_status(
+                    return Ok(get_response(
                         "login error: search none thing by uuid",
                         http::StatusCode::BAD_REQUEST,
                     ));
@@ -102,7 +101,7 @@ async fn login(login: Login, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infall
                 Ok(some) => match some {
                     None => {
                         log::debug!("login error: search result is None value by uuid");
-                        return Ok(warp::reply::with_status(
+                        return Ok(get_response(
                             "login error: search result is None value by uuid",
                             http::StatusCode::BAD_REQUEST,
                         ));
@@ -111,16 +110,10 @@ async fn login(login: Login, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infall
                         log::debug!("register db = {:?}", res);
                         if res.password.unwrap() == password {
                             log::debug!("login success");
-                            return Ok(warp::reply::with_status(
-                                "PASSWORD SUCCEESS",
-                                http::StatusCode::OK,
-                            ));
+                            return Ok(get_response("PASSWORD SUCCEESS", http::StatusCode::OK));
                         } else {
                             log::debug!("login failed");
-                            return Ok(warp::reply::with_status(
-                                "PASSWORD ERROR",
-                                http::StatusCode::NOT_FOUND,
-                            ));
+                            return Ok(get_response("PASSWORD ERROR", http::StatusCode::NOT_FOUND));
                         }
                     }
                 },
@@ -146,7 +139,7 @@ pub async fn create_user(
     match ret_create_register_db {
         Err(_err) => {
             log::debug!("search register by id error ");
-            return Ok(warp::reply::with_status(
+            return Ok(get_response(
                 "search register by id error",
                 http::StatusCode::BAD_REQUEST,
             ));
@@ -158,8 +151,7 @@ pub async fn create_user(
                     || some.web3_address == create_register_db.web3_address =>
             {
                 log::debug!("    -> id already exists: {}", create_id);
-
-                return Ok(warp::reply::with_status(
+                return Ok(get_response(
                     "user already exists",
                     http::StatusCode::BAD_REQUEST,
                 ));
@@ -168,22 +160,16 @@ pub async fn create_user(
                 let r = db.save("", &create_register_db).await;
                 if r.is_err() {
                     log::debug!("create_resister: {}", r.err().unwrap().to_string());
-                    return Ok(warp::reply::with_status(
+                    return Ok(get_response(
                         "create user failed",
                         http::StatusCode::NOT_FOUND,
                     ));
                 } else {
-                    return Ok(warp::reply::with_status(
-                        "create user success",
-                        http::StatusCode::OK,
-                    ));
+                    return Ok(get_response("create user success", http::StatusCode::OK));
                 }
             }
             _ => {
-                return Ok(warp::reply::with_status(
-                    "cann assess",
-                    http::StatusCode::NOT_FOUND,
-                ));
+                return Ok(get_response("cannot assess", http::StatusCode::NOT_FOUND));
             }
         },
     }
@@ -202,18 +188,15 @@ pub async fn update_user(
     match update_id {
         Ok(update_id) => {
             log::debug!("update register, res: {}, id : {}", update_id, id);
-            Ok(warp::reply::with_status(
-                "update success",
-                http::StatusCode::OK,
-            ))
+            return Ok(get_response("update success", http::StatusCode::OK));
         }
         Err(_err) => {
             // If the for loop didn't return OK, then the ID doesn't exist...
             log::debug!("    -> register id not found!");
-            Ok(warp::reply::with_status(
+            return Ok(get_response(
                 "user id not found",
                 http::StatusCode::NOT_FOUND,
-            ))
+            ));
         }
     }
 }
@@ -226,17 +209,26 @@ pub async fn delete_user(id: u64, db: Arc<Rbatis>) -> Result<impl warp::Reply, I
     match delete_id {
         Ok(delete_id) => {
             log::debug!("delete_user: ret: {}, id: {}", delete_id, id);
-            Ok(warp::reply::with_status(
-                "delete user success",
-                http::StatusCode::OK,
-            ))
+            return Ok(get_response("delete user success", http::StatusCode::OK));
         }
         Err(_err) => {
             log::debug!("    -> user id not found!");
-            Ok(warp::reply::with_status(
+            return Ok(get_response(
                 "user id not found!",
                 http::StatusCode::NOT_FOUND,
-            ))
+            ));
         }
     }
+}
+
+fn get_response<T: Reply>(reply: T, statues: StatusCode) -> Response {
+    log::debug!("user is empty!");
+    let mut resp =
+        warp::reply::with_header(reply, "Access-Control-Allow-Origin", "*").into_response();
+    resp.headers_mut()
+        .append("Connection", "Keep-Alive".parse().unwrap());
+    resp.headers_mut()
+        .append("Keep-Alive", "timeout=2, max=100".parse().unwrap());
+    *resp.status_mut() = statues;
+    resp
 }
