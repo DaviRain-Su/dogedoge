@@ -148,8 +148,8 @@ pub async fn create_user(
         Ok(res) => match res {
             Some(some)
                 if some.id == create_register_db.id
-                    || some.phone_number == create_register_db.phone_number
-                    || some.web3_address == create_register_db.web3_address =>
+                    && some.phone_number == create_register_db.phone_number
+                    && some.web3_address == create_register_db.web3_address =>
             {
                 log::debug!("    -> id already exists: {}", create_uuid);
                 return Ok(get_response(
