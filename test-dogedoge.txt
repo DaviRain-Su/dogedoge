@@ -10,7 +10,7 @@ curl -v  -H "Content-Type:application/json" -X POST --data '{"id":1, "uuid": "23
 
 ### 注册用户2
 
-curl -v  -H "Content-Type:application/json" -X POST --data '{"id":2, "uuid": "239934993493", "phone_number":"17366503261", "password":"111111", "web3_address": "hdshhshdshdhhbcsbcdbcsdbcskcbsdcbsbcksd", "sign_time":"2020-1-1", "login_time":"2020-1-2" }' http://localhost:3030/register
+curl -v  -H "Content-Type:application/json" -X POST --data '{"id":2, "uuid": "335789990882", "phone_number":"17366503261", "password":"111111", "web3_address": "hdshhshdshdhhbcsbcdbcsdbcskcbsdcbsbcksd", "sign_time":"2020-1-1", "login_time":"2020-1-2" }' http://localhost:3030/register
 
 # 登录
 

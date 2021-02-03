@@ -131,8 +131,9 @@ pub async fn create_user(
     log::debug!("create_register: {:?}", create);
     let create_register_db = RegistersDB::from(create.clone());
 
-    let create_id = create.id;
-    let w = db.new_wrapper().eq("id", &create_id.to_string());
+    // 通过uuid唯一的标示
+    let create_uuid = create.uuid;
+    let w = db.new_wrapper().eq("uuid", &create_uuid);
     let ret_create_register_db: Result<Option<RegistersDB>, Error> =
         db.fetch_by_wrapper("", &w).await;
 
@@ -150,7 +151,7 @@ pub async fn create_user(
                     || some.phone_number == create_register_db.phone_number
                     || some.web3_address == create_register_db.web3_address =>
             {
-                log::debug!("    -> id already exists: {}", create_id);
+                log::debug!("    -> id already exists: {}", create_uuid);
                 return Ok(get_response(
                     "user already exists",
                     http::StatusCode::BAD_REQUEST,
@@ -165,7 +166,7 @@ pub async fn create_user(
                         http::StatusCode::NOT_FOUND,
                     ));
                 } else {
-                    return Ok(get_response("create user success", http::StatusCode::OK));
+                    return Ok(get_response("create user success", http::StatusCode::CREATED));
                 }
             }
             _ => {
