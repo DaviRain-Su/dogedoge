@@ -18,7 +18,8 @@ pub async fn list_user(
 ) -> Result<impl warp::Reply, Infallible> {
     log::debug!("list_user");
 
-    let registers = db.list("").await;
+    // let registers = db.list("").await;
+    let registers = db.fetch_list("").await;
     if registers.is_err() {
         log::debug!("user is empty!");
         Ok(get_response(
@@ -142,7 +143,9 @@ pub async fn create_user(
         .eq("phone_number", &create_phone_number)
         .or()
         .eq("web3_address", &create_web3_address);
-    let ret_create_register_db: Result<Vec<RegistersDB>, Error> = db.list_by_wrapper("", &w).await;
+
+    // let ret_create_register_db: Result<Vec<RegistersDB>, Error> = db.list_by_wrapper("", &w).await;
+    let ret_create_register_db: Result<Vec<RegistersDB>, Error> = db.fetch_list_by_wrapper("", &w).await;
 
     match ret_create_register_db {
         Err(_err) => {
