@@ -33,8 +33,8 @@ async fn main() {
     pretty_env_logger::init();
 
     let db = init_rbatis().await;
-
-    let api = filters::main_logic(db.clone());
+    let cors = warp::cors().allow_any_origin();
+    let api = filters::main_logic(db.clone()).with(cors);
 
     // View access logs by setting `RUST_LOG=Registers`.
     let routes = api.with(warp::log("registers"));

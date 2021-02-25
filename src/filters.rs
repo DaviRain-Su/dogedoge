@@ -17,7 +17,9 @@ pub fn main_logic(
         .or(update_web3_address(db.clone())) // 更新web3地址
         .or(update_phone_number(db.clone())) // 更新手机号
         .or(user_list(db.clone()))
-        .or(delete_user(db))
+        .or(delete_user(db.clone()))
+        .or(get_daily_reward(db.clone())) // 检查每日奖励
+        .or(post_daily_reward(db.clone())) // 插入每日奖励
 }
 
 // 登录逻辑
@@ -103,6 +105,30 @@ pub fn update_phone_number(
         .and(json_body())
         .and(with_db(db))
         .and_then(handlers::update_user)
+}
+
+// 查询是否已经获得日常奖励
+/// GET /daily-reward/:address
+pub fn get_daily_reward(
+    db: Arc<Rbatis>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::path!("daily-reward" / String)
+        .and(warp::get())
+        .and(with_db(db))
+        .and_then(handlers::check_daily_reward)
+}
+
+// 插入当日奖励
+/// POST /daily-reward/:address
+pub fn post_daily_reward(
+    db: Arc<Rbatis>,
+) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    let admin_only = warp::header::exact("authorization", "Bearer admin");
+    warp::path!("daily-reward" / String)
+        .and(admin_only)
+        .and(warp::post())
+        .and(with_db(db))
+        .and_then(handlers::create_daily_reward)
 }
 
 // 删除用户

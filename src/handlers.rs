@@ -2,7 +2,7 @@
 /// Notice how thanks to using `Filter::and`, we can define a function
 /// with the exact arguments we'd expect from each filter in the chain.
 /// No tuples are needed, it's auto flattened for the functions.
-use super::db::{ListOptions, Login, Login1, Login2, Register, RegistersDB};
+use super::db::{DailyReward, ListOptions, Login, Login1, Login2, Register, RegistersDB};
 use rbatis::crud::CRUD;
 use rbatis::rbatis::Rbatis;
 use rbatis::Error;
@@ -145,7 +145,8 @@ pub async fn create_user(
         .eq("web3_address", &create_web3_address);
 
     // let ret_create_register_db: Result<Vec<RegistersDB>, Error> = db.list_by_wrapper("", &w).await;
-    let ret_create_register_db: Result<Vec<RegistersDB>, Error> = db.fetch_list_by_wrapper("", &w).await;
+    let ret_create_register_db: Result<Vec<RegistersDB>, Error> =
+        db.fetch_list_by_wrapper("", &w).await;
 
     match ret_create_register_db {
         Err(_err) => {
@@ -208,6 +209,42 @@ pub async fn update_user(
                 "user id not found",
                 http::StatusCode::NOT_FOUND,
             ));
+        }
+    }
+}
+
+pub async fn check_daily_reward(
+    address: String,
+    db: Arc<Rbatis>,
+) -> Result<impl warp::Reply, Infallible> {
+    log::debug!("address: {}", address);
+
+    let w = db.new_wrapper().eq("address", address);
+    let r: Result<Option<DailyReward>, Error> = db.fetch_by_wrapper("", &w).await;
+    match r {
+        Ok(res) if res.is_some() => {
+            return Ok(get_response("", http::StatusCode::FORBIDDEN));
+        }
+        _ => {
+            return Ok(get_response("", http::StatusCode::OK));
+        }
+    }
+}
+
+pub async fn create_daily_reward(
+    address: String,
+    db: Arc<Rbatis>,
+) -> Result<impl warp::Reply, Infallible> {
+    log::debug!("address: {}", address);
+    let dr = DailyReward { id: None, address };
+    let res = db.save("", &dr).await;
+    match res {
+        Ok(_) => {
+            return Ok(get_response("", http::StatusCode::OK));
+        }
+        Err(err) => {
+            log::debug!("error happened on inserting daily reward: {}", err);
+            return Ok(get_response("", http::StatusCode::INTERNAL_SERVER_ERROR));
         }
     }
 }

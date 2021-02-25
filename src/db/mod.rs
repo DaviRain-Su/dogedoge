@@ -60,6 +60,13 @@ pub struct Register {
     pub login_time: String,
 }
 
+#[crud_enable]
+#[derive(Debug, Deserialize, Serialize, Clone, std::cmp::PartialEq)]
+pub struct DailyReward {
+    pub id: Option<u64>,
+    pub address: String,
+}
+
 impl Register {
     pub fn from(register_db: RegistersDB) -> Self {
         Self {
