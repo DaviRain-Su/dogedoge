@@ -2,7 +2,9 @@
 /// Notice how thanks to using `Filter::and`, we can define a function
 /// with the exact arguments we'd expect from each filter in the chain.
 /// No tuples are needed, it's auto flattened for the functions.
-use super::db::{DailyReward, ListOptions, Login, Login1, Login2, Register, RegistersDB};
+use super::db::{
+    DailyReward, ListOptions, Login, Login1, Login2, Register, RegistersDB, UserReward,
+};
 use rbatis::crud::CRUD;
 use rbatis::rbatis::Rbatis;
 use rbatis::Error;
@@ -213,38 +215,74 @@ pub async fn update_user(
     }
 }
 
-pub async fn check_daily_reward(
-    address: String,
+pub async fn get_daily_reward(
     db: Arc<Rbatis>,
 ) -> Result<impl warp::Reply, Infallible> {
-    log::debug!("address: {}", address);
+    log::debug!("get daily reward");
 
-    let w = db.new_wrapper().eq("address", address);
-    let r: Result<Option<DailyReward>, Error> = db.fetch_by_wrapper("", &w).await;
-    match r {
-        Ok(res) if res.is_some() => {
-            return Ok(get_response("", http::StatusCode::FORBIDDEN));
-        }
-        _ => {
-            return Ok(get_response("", http::StatusCode::OK));
-        }
+    let daily_reward = db.fetch_list("").await;
+    if daily_reward.is_err() {
+        log::debug!("daily is empty!");
+        Ok(get_response(
+            warp::reply::json(&Vec::<Register>::new()),
+                    // "There is no daily address",
+            StatusCode::OK,
+        ))
+    } else {
+        let registers: Vec<UserReward> = daily_reward
+            .unwrap()
+            .into_iter()
+            .map(|val| UserReward::from(val))
+            .collect();
+        log::debug!("daily reward {:?}", registers);
+        Ok(get_response(warp::reply::json(&registers), StatusCode::OK))
     }
 }
 
-pub async fn create_daily_reward(
-    address: String,
+pub async fn post_daily_reward(
+    user_ward: UserReward,
     db: Arc<Rbatis>,
 ) -> Result<impl warp::Reply, Infallible> {
-    log::debug!("address: {}", address);
-    let dr = DailyReward { id: None, address };
-    let res = db.save("", &dr).await;
-    match res {
-        Ok(_) => {
-            return Ok(get_response("", http::StatusCode::OK));
+    log::debug!("user ward : {:?}", user_ward);
+
+    let daily_reward_db = DailyReward::from(user_ward.clone());
+
+    let address = user_ward.address;
+    let w = db.new_wrapper().eq("address", &address);
+
+    let ret_daily_reward_db: Result<Vec<DailyReward>, Error> =
+        db.fetch_list_by_wrapper("", &w).await;
+
+    match ret_daily_reward_db {
+        Err(_err) => {
+            log::debug!("search daily reward by address error: {:?}", _err);
+            return Ok(get_response(
+                "search daily reward by address error",
+                http::StatusCode::BAD_REQUEST,
+            ));
         }
-        Err(err) => {
-            log::debug!("error happened on inserting daily reward: {}", err);
-            return Ok(get_response("", http::StatusCode::INTERNAL_SERVER_ERROR));
+        Ok(res) => {
+            if res.is_empty() {
+                let r = db.save("", &daily_reward_db).await;
+                if r.is_err() {
+                    log::debug!("daily_reward : {}", r.err().unwrap().to_string());
+                    return Ok(get_response(
+                        "create daily reward failed",
+                        http::StatusCode::NOT_FOUND,
+                    ));
+                } else {
+                    return Ok(get_response(
+                        "create daily reward success",
+                        http::StatusCode::CREATED,
+                    ));
+                }
+            } else {
+                log::debug!("    -> id already exists (address :{})", address);
+                return Ok(get_response(
+                    "daily reward already exists",
+                    http::StatusCode::BAD_REQUEST,
+                ));
+            }
         }
     }
 }
@@ -270,7 +308,7 @@ pub async fn delete_user(id: u64, db: Arc<Rbatis>) -> Result<impl warp::Reply, I
 }
 
 fn get_response<T: Reply>(reply: T, statues: StatusCode) -> Response {
-    log::debug!("user is empty!");
+    // log::debug!("user is empty!");
     let mut resp =
         warp::reply::with_header(reply, "Access-Control-Allow-Origin", "*").into_response();
     resp.headers_mut()

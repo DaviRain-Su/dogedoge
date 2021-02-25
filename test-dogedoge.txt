@@ -53,4 +53,13 @@ curl -v -H "Content-Type:application/json" -X GET http://localhost:3030/users
 curl -v  -H "Content-Type:application/json" -H "authorization:Bearer admin"  -X DELETE  http://localhost:3030/user/1
 
 
+## ETST daily reward
+
+#daily reward  POST
+
+curl -v  -H "Content-Type:application/json" -X POST --data '{"address":"12bzRJfh7arnnfPPUZHeJUaE62QLEwhK48QnH9LXeK2m1iZU" }'  http://localhost:3030/daily-reward
+
+# daily rewar GET
+
+curl -v -H "Content-Type:application/json" -X GET http://localhost:3030/daily-reward
 
