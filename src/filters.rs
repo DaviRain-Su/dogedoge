@@ -1,4 +1,5 @@
-use super::db::{ListOptions, Register};
+use serde::Deserialize;
+use super::db::{ListOptions, Register, UserReward};
 use super::handlers;
 use crate::db::{Login1, Login2};
 use rbatis::rbatis::Rbatis;
@@ -108,7 +109,7 @@ pub fn update_phone_number(
 }
 
 // 查询是否已经获得日常奖励
-/// GET /daily-reward/:address
+/// GET /daily-reward
 pub fn get_daily_reward(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
@@ -119,16 +120,17 @@ pub fn get_daily_reward(
 }
 
 // 插入当日奖励
-/// POST /daily-reward/:address
+/// POST /daily-reward JSON body
 pub fn post_daily_reward(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     let admin_only = warp::header::exact("authorization", "Bearer admin");
-    warp::path!("daily-reward" / String)
+    warp::path!("daily-reward")
         .and(admin_only)
+        .and(generics_json_body::<UserReward>())
         .and(warp::post())
         .and(with_db(db))
-        .and_then(handlers::create_daily_reward)
+        .and_then(handlers::post_daily_reward)
 }
 
 // 删除用户
@@ -157,6 +159,15 @@ fn with_db(
 }
 
 fn json_body() -> impl Filter<Extract = (Register,), Error = warp::Rejection> + Clone {
+    // When accepting a body, we want a JSON body
+    // (and to reject huge payloads)...
+    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
+}
+
+fn generics_json_body<T>() -> impl Filter<Extract = (T,), Error = warp::Rejection> + Clone
+where
+    T: Send +  for<'de> Deserialize<'de>,
+{
     // When accepting a body, we want a JSON body
     // (and to reject huge payloads)...
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
