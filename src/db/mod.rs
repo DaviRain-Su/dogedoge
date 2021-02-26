@@ -1,15 +1,10 @@
-use serde_derive::{Deserialize, Serialize};
-// use chrono::NaiveDateTime;
-// use rbatis::core::value::DateTimeNow;
-// use rbatis::core::Error;
-// use rbatis::crud::CRUD;
-// use rbatis::plugin::logic_delete::RbatisLogicDeletePlugin;
-// use rbatis::plugin::page::{Page, PageRequest};
-use rbatis::rbatis::Rbatis;
-// use rbatis::plugin::version_lock::RbatisVersionLockPlugin;
 use rbatis::core::db::DBPoolOptions;
+use rbatis::rbatis::Rbatis;
+use serde_derive::{Deserialize, Serialize};
 use std::sync::Arc;
 
+//******************************This is for register***************************************
+// This is register for database to use
 #[crud_enable]
 #[derive(Clone, Debug)]
 pub struct RegistersDB {
@@ -25,7 +20,7 @@ pub struct RegistersDB {
 impl RegistersDB {
     pub fn from(register: Register) -> Self {
         Self {
-            id: None,
+            id: Some(register.id),
             uuid: Some(register.uuid),
             phone_number: Some(register.phone_number),
             password: Some(register.password),
@@ -36,28 +31,7 @@ impl RegistersDB {
     }
 }
 
-// #[crud_enable]
-// #[derive(Clone, Debug)]
-// pub struct DailyReward {
-//     pub id: Option<String>,
-//     pub address: Option<String>,
-//     pub created_at: Option<String>,
-//     pub updated_at: Option<String>,
-// }
-
-pub async fn init_rbatis() -> Arc<Rbatis> {
-    let rb = Rbatis::new();
-
-    // 自定义连接池
-    let mut opt = DBPoolOptions::new();
-    opt.max_connections = 20;
-    rb.link_opt(MYSQL_URL, &opt).await.unwrap();
-    Arc::new(rb)
-}
-
-/// So we don't have to tackle how different database work, we'll just use
-/// a simple in-memory DB, a vector synchronized by a mutex.
-
+// This is for normal to use register
 #[derive(Debug, Deserialize, Serialize, Clone, std::cmp::PartialEq)]
 pub struct Register {
     pub id: u64,
@@ -72,23 +46,23 @@ pub struct Register {
 impl Register {
     pub fn from(register_db: RegistersDB) -> Self {
         Self {
-            id: register_db.id.unwrap(),
-            uuid: register_db.uuid.unwrap(),
-            phone_number: register_db.phone_number.unwrap(),
-            password: register_db.password.unwrap(),
-            web3_address: register_db.web3_address.unwrap(),
-            sign_time: register_db.sign_time.unwrap(),
-            login_time: register_db.login_time.unwrap(),
+            id: register_db.id.unwrap_or(0),
+            uuid: register_db.uuid.unwrap_or("0".to_owned()),
+            phone_number: register_db.phone_number.unwrap_or("0".to_owned()),
+            password: register_db.password.unwrap_or("0".to_owned()),
+            web3_address: register_db.web3_address.unwrap_or("0".to_owned()),
+            sign_time: register_db.sign_time.unwrap_or("0".to_owned()),
+            login_time: register_db.login_time.unwrap_or("0".to_owned()),
         }
     }
 }
 
-// #[crud_enable]
+//**********************This is daily Reward***************************
+// this User Reward is for normal use.
 #[derive(Debug, Deserialize, Serialize, Clone, std::cmp::PartialEq)]
 pub struct UserReward {
     pub address: String,
 }
-
 
 impl UserReward {
     pub fn from(daily_reward: DailyReward) -> Self {
@@ -98,7 +72,7 @@ impl UserReward {
     }
 }
 
-
+// This Daily Reward is for database to use
 #[crud_enable]
 #[derive(Debug, Clone)]
 pub struct DailyReward {
@@ -115,18 +89,21 @@ impl DailyReward {
     }
 }
 
+// **********************This is for login**********************************
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum Login {
     LOGIN1(Login1),
     LOGIN2(Login2),
 }
 
+// login by uuid a way
 #[derive(Debug, Deserialize, Serialize, Clone, std::cmp::PartialEq)]
 pub struct Login1 {
     pub uuid: String,
     pub password: String,
 }
 
+// login by phone number a way
 #[derive(Debug, Deserialize, Serialize, Clone, std::cmp::PartialEq)]
 pub struct Login2 {
     pub phone_number: String,
@@ -140,9 +117,22 @@ pub struct ListOptions {
     pub limit: Option<usize>,
 }
 
+// ******************** This is for databases*****************************
+// setting database url address
 pub const MYSQL_URL: &str = "mysql://root:123456@47.98.193.249:3306/user";
+
+pub async fn init_rbatis() -> Arc<Rbatis> {
+    let rb = Rbatis::new();
+
+    // 自定义连接池
+    let mut opt = DBPoolOptions::new();
+    opt.max_connections = 20;
+    rb.link_opt(MYSQL_URL, &opt).await.unwrap();
+    Arc::new(rb)
+}
 
 lazy_static! {
     // Rbatis是线程、协程安全的，运行时的方法是Send+Sync，无需担心线程竞争
     pub static ref RB: Rbatis = Rbatis::new();
 }
+//***************************************************************************

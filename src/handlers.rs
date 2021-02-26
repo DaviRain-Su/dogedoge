@@ -20,23 +20,26 @@ pub async fn list_user(
 ) -> Result<impl warp::Reply, Infallible> {
     log::debug!("list_user");
 
-    // let registers = db.list("").await;
-    let registers = db.fetch_list("").await;
-    if registers.is_err() {
-        log::debug!("user is empty!");
-        Ok(get_response(
-            warp::reply::json(&Vec::<Register>::new()),
-            StatusCode::OK,
-        ))
-    } else {
-        let registers: Vec<Register> = registers
-            .unwrap()
-            .into_iter()
-            .map(|val| Register::from(val))
-            .collect();
-        log::debug!("users is {:?}", registers);
-        Ok(get_response(warp::reply::json(&registers), StatusCode::OK))
-    }
+    let registers: Result<Vec<RegistersDB>, Error> = db.fetch_list("").await;
+    registers.as_ref().map_or_else(
+        |_error| {
+            log::debug!("user is empty!");
+            Ok(get_response(
+                warp::reply::json(&Vec::<Register>::new()),
+                StatusCode::OK,
+            ))
+        },
+        |_| {
+            let registers: Vec<Register> = registers
+                .as_ref()
+                .unwrap()
+                .into_iter()
+                .map(|val| Register::from(val.clone()))
+                .collect();
+            log::debug!("users is {:?}", registers);
+            Ok(get_response(warp::reply::json(&registers), StatusCode::OK))
+        },
+    )
 }
 
 // login by Login1
@@ -57,35 +60,40 @@ async fn login(login: Login, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infall
         Login::LOGIN1(Login1 { uuid, password }) => {
             log::debug!("uuid = {}, password = {}", uuid, password);
             let w = db.new_wrapper().eq("uuid", &uuid);
-            let r: Result<Option<RegistersDB>, Error> = db.fetch_by_wrapper("", &w).await;
-            match r {
-                Err(_err) => {
-                    log::debug!("login error[{:?}]: search none thing by uuid", _err);
+            let ret: Result<Option<RegistersDB>, Error> = db.fetch_by_wrapper("", &w).await;
+            ret.map_or_else(
+                |_error| {
+                    log::debug!("login error[{:?}]: search none thing by uuid", _error);
                     return Ok(get_response(
                         "login error: search none thing by uuid",
                         StatusCode::BAD_REQUEST,
                     ));
-                }
-                Ok(some) => match some {
-                    None => {
-                        log::debug!("login error: search result is None value by uuid");
-                        return Ok(get_response(
-                            "login error: search result is None value by uuid",
-                            http::StatusCode::BAD_REQUEST,
-                        ));
-                    }
-                    Some(res) => {
-                        log::debug!("register db = {:?}", res);
-                        if res.password.unwrap() == password {
-                            log::debug!("login success");
-                            return Ok(get_response("PASSWORD SUCCEESS", http::StatusCode::OK));
-                        } else {
-                            log::debug!("login failed");
-                            return Ok(get_response("PASSWORD ERROR", http::StatusCode::NOT_FOUND));
-                        }
-                    }
                 },
-            }
+                |some| {
+                    some.map_or_else(
+                        || {
+                            log::debug!("login error: search result is None value by uuid");
+                            return Ok(get_response(
+                                "login error: search result is None value by uuid",
+                                http::StatusCode::BAD_REQUEST,
+                            ));
+                        },
+                        |res| {
+                            log::debug!("register db = {:?}", res);
+                            if res.password.unwrap() == password {
+                                log::debug!("login success");
+                                return Ok(get_response("PASSWORD SUCCEESS", http::StatusCode::OK));
+                            } else {
+                                log::debug!("login failed");
+                                return Ok(get_response(
+                                    "PASSWORD ERROR",
+                                    http::StatusCode::NOT_FOUND,
+                                ));
+                            }
+                        },
+                    )
+                },
+            )
         }
         Login::LOGIN2(Login2 {
             phone_number,
@@ -93,34 +101,39 @@ async fn login(login: Login, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infall
         }) => {
             let w = db.new_wrapper().eq("phone_number", &phone_number);
             let r: Result<Option<RegistersDB>, Error> = db.fetch_by_wrapper("", &w).await;
-            match r {
-                Err(_err) => {
-                    log::debug!("login error[{:?}]: search none thing by uuid", _err);
+            r.map_or_else(
+                |_err| {
+                    log::debug!("login error[{:?}]: search none thing by phone number", _err);
                     return Ok(get_response(
-                        "login error: search none thing by uuid",
+                        "login error: search none thing by phone number",
                         http::StatusCode::BAD_REQUEST,
                     ));
-                }
-                Ok(some) => match some {
-                    None => {
-                        log::debug!("login error: search result is None value by uuid");
-                        return Ok(get_response(
-                            "login error: search result is None value by uuid",
-                            http::StatusCode::BAD_REQUEST,
-                        ));
-                    }
-                    Some(res) => {
-                        log::debug!("register db = {:?}", res);
-                        if res.password.unwrap() == password {
-                            log::debug!("login success");
-                            return Ok(get_response("PASSWORD SUCCEESS", http::StatusCode::OK));
-                        } else {
-                            log::debug!("login failed");
-                            return Ok(get_response("PASSWORD ERROR", http::StatusCode::NOT_FOUND));
-                        }
-                    }
                 },
-            }
+                |some| {
+                    some.map_or_else(
+                        || {
+                            log::debug!("login error: search result is None value by phone number");
+                            return Ok(get_response(
+                                "login error: search result is None value by phone number",
+                                http::StatusCode::BAD_REQUEST,
+                            ));
+                        },
+                        |res| {
+                            log::debug!("register db = {:?}", res);
+                            if res.password.unwrap() == password {
+                                log::debug!("login success");
+                                return Ok(get_response("PASSWORD SUCCEESS", http::StatusCode::OK));
+                            } else {
+                                log::debug!("login failed");
+                                return Ok(get_response(
+                                    "PASSWORD ERROR",
+                                    http::StatusCode::NOT_FOUND,
+                                ));
+                            }
+                        },
+                    )
+                },
+            )
         }
     }
 }
@@ -146,33 +159,35 @@ pub async fn create_user(
         .or()
         .eq("web3_address", &create_web3_address);
 
-    // let ret_create_register_db: Result<Vec<RegistersDB>, Error> = db.list_by_wrapper("", &w).await;
     let ret_create_register_db: Result<Vec<RegistersDB>, Error> =
         db.fetch_list_by_wrapper("", &w).await;
 
     match ret_create_register_db {
         Err(_err) => {
             log::debug!("search register by id error ");
-            return Ok(get_response(
+            Ok(get_response(
                 "search register by id error",
                 http::StatusCode::BAD_REQUEST,
-            ));
+            ))
         }
         Ok(res) => {
             if res.is_empty() {
                 let r = db.save("", &create_register_db).await;
-                if r.is_err() {
-                    log::debug!("create_resister: {}", r.err().unwrap().to_string());
-                    return Ok(get_response(
-                        "create user failed",
-                        http::StatusCode::NOT_FOUND,
-                    ));
-                } else {
-                    return Ok(get_response(
-                        "create user success",
-                        http::StatusCode::CREATED,
-                    ));
-                }
+                r.map_or_else(
+                    |error| {
+                        log::debug!("create_resister: {}", error);
+                        Ok(get_response(
+                            "create user failed",
+                            http::StatusCode::NOT_FOUND,
+                        ))
+                    },
+                    |_| {
+                        Ok(get_response(
+                            "create user success",
+                            http::StatusCode::CREATED,
+                        ))
+                    },
+                )
             } else {
                 log::debug!(
                     "    -> id already exists (uuid :{}, phone number: {}, web3 address: {})",
@@ -180,10 +195,10 @@ pub async fn create_user(
                     create_phone_number,
                     create_web3_address
                 );
-                return Ok(get_response(
+                Ok(get_response(
                     "user already exists",
                     http::StatusCode::BAD_REQUEST,
-                ));
+                ))
             }
         }
     }
@@ -199,38 +214,46 @@ pub async fn update_user(
 
     let mut update_register_db = RegistersDB::from(update.clone());
     let update_id = db.update_by_id("", &mut update_register_db).await;
-    match update_id {
-        Ok(update_id) => {
-            log::debug!("update register, res: {}, id : {}", update_id, id);
-            return Ok(get_response("update success", http::StatusCode::OK));
-        }
-        Err(_err) => {
+    update_id.map_or_else(
+        |_error| {
             // If the for loop didn't return OK, then the ID doesn't exist...
             log::debug!("    -> register id not found!");
-            return Ok(get_response(
+            Ok(get_response(
                 "user id not found",
                 http::StatusCode::NOT_FOUND,
-            ));
-        }
-    }
+            ))
+        },
+        |update_id| {
+            log::debug!("update register, res: {}, id : {}", update_id, id);
+            Ok(get_response("update success", http::StatusCode::OK))
+        },
+    )
 }
 
-pub async fn check_daily_reward(
-    address: String,
-    db: Arc<Rbatis>,
-) -> Result<impl warp::Reply, Infallible> {
-    log::debug!("address: {}", address);
+pub async fn get_daily_reward(db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
+    log::debug!("get daily reward");
 
-    let w = db.new_wrapper().eq("address", address);
-    let r: Result<Option<DailyReward>, Error> = db.fetch_by_wrapper("", &w).await;
-    match r {
-        Ok(res) if res.is_some() => {
-            return Ok(get_response("", http::StatusCode::FORBIDDEN));
-        }
-        _ => {
-            return Ok(get_response("", http::StatusCode::OK));
-        }
-    }
+    let daily_reward: Result<Vec<DailyReward>, Error> = db.fetch_list("").await;
+
+    daily_reward.as_ref().map_or_else(
+        |_error| {
+            log::debug!("daily is empty!");
+            Ok(get_response(
+                warp::reply::json(&Vec::<Register>::new()),
+                StatusCode::OK,
+            ))
+        },
+        |_| {
+            let registers: Vec<UserReward> = daily_reward
+                .as_ref()
+                .unwrap()
+                .into_iter()
+                .map(|val| UserReward::from(val.clone()))
+                .collect();
+            log::debug!("daily reward {:?}", registers);
+            Ok(get_response(warp::reply::json(&registers), StatusCode::OK))
+        },
+    )
 }
 
 pub async fn post_daily_reward(
@@ -246,36 +269,38 @@ pub async fn post_daily_reward(
 
     let ret_daily_reward_db: Result<Vec<DailyReward>, Error> =
         db.fetch_list_by_wrapper("", &w).await;
-
     match ret_daily_reward_db {
         Err(_err) => {
             log::debug!("search daily reward by address error: {:?}", _err);
-            return Ok(get_response(
+            Ok(get_response(
                 "search daily reward by address error",
                 http::StatusCode::BAD_REQUEST,
-            ));
+            ))
         }
         Ok(res) => {
             if res.is_empty() {
                 let r = db.save("", &daily_reward_db).await;
-                if r.is_err() {
-                    log::debug!("daily_reward : {}", r.err().unwrap().to_string());
-                    return Ok(get_response(
-                        "create daily reward failed",
-                        http::StatusCode::NOT_FOUND,
-                    ));
-                } else {
-                    return Ok(get_response(
-                        "create daily reward success",
-                        http::StatusCode::CREATED,
-                    ));
-                }
+                r.map_or_else(
+                    |error| {
+                        log::debug!("daily_reward : {}", error);
+                        Ok(get_response(
+                            "create daily reward failed",
+                            http::StatusCode::NOT_FOUND,
+                        ))
+                    },
+                    |_ok| {
+                        Ok(get_response(
+                            "create daily reward success",
+                            http::StatusCode::CREATED,
+                        ))
+                    },
+                )
             } else {
                 log::debug!("    -> id already exists (address :{})", &address);
-                return Ok(get_response(
+                Ok(get_response(
                     "daily reward already exists",
                     http::StatusCode::BAD_REQUEST,
-                ));
+                ))
             }
         }
     }
@@ -286,19 +311,19 @@ pub async fn delete_user(id: u64, db: Arc<Rbatis>) -> Result<impl warp::Reply, I
     log::debug!("delete_register: id={}", id);
 
     let delete_id = db.remove_by_id::<RegistersDB>("", &id).await;
-    match delete_id {
-        Ok(delete_id) => {
-            log::debug!("delete_user: ret: {}, id: {}", delete_id, id);
-            return Ok(get_response("delete user success", http::StatusCode::OK));
-        }
-        Err(_err) => {
+    delete_id.map_or_else(
+        |_err| {
             log::debug!("    -> user id not found!");
-            return Ok(get_response(
+            Ok(get_response(
                 "user id not found!",
                 http::StatusCode::NOT_FOUND,
-            ));
-        }
-    }
+            ))
+        },
+        |delete_id| {
+            log::debug!("delete_user: ret: {}, id: {}", delete_id, id);
+            Ok(get_response("delete user success", http::StatusCode::OK))
+        },
+    )
 }
 
 fn get_response<T: Reply>(reply: T, statues: StatusCode) -> Response {
