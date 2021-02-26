@@ -57,9 +57,13 @@ curl -v  -H "Content-Type:application/json" -H "authorization:Bearer admin"  -X 
 
 #daily reward  POST
 
-curl -v  -H "Content-Type:application/json" -X POST --data '{"address":"12bzRJfh7arnnfPPUZHeJUaE62QLEwhK48QnH9LXeK2m1iZU" }'  http://localhost:3030/daily-reward
+curl --location --request POST 'localhost:3030/daily-reward' \
+--header 'Authorization: Bearer admin' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "address": "1234567"
+}'
 
-# daily rewar GET
+# daily reward GET
 
-curl -v -H "Content-Type:application/json" -X GET http://localhost:3030/daily-reward
-
+curl --location --request GET 'localhost:3030/daily-reward/12345'

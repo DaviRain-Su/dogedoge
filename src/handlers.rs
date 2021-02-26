@@ -311,7 +311,6 @@ pub async fn delete_user(id: u64, db: Arc<Rbatis>) -> Result<impl warp::Reply, I
     log::debug!("delete_register: id={}", id);
 
     let delete_id = db.remove_by_id::<RegistersDB>("", &id).await;
-
     delete_id.map_or_else(
         |_err| {
             log::debug!("    -> user id not found!");
