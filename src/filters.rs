@@ -1,3 +1,4 @@
+use serde::Deserialize;
 use super::db::{ListOptions, Register, UserReward};
 use super::handlers;
 use crate::db::{Login1, Login2};
@@ -126,7 +127,7 @@ pub fn post_daily_reward(
     let admin_only = warp::header::exact("authorization", "Bearer admin");
     warp::path!("daily-reward")
         .and(admin_only)
-        .and(json_body_reward())
+        .and(generics_json_body::<UserReward>())
         .and(warp::post())
         .and(with_db(db))
         .and_then(handlers::post_daily_reward)
@@ -163,7 +164,10 @@ fn json_body() -> impl Filter<Extract = (Register,), Error = warp::Rejection> + 
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
-fn json_body_reward() -> impl Filter<Extract = (UserReward,), Error = warp::Rejection> + Clone {
+fn generics_json_body<T>() -> impl Filter<Extract = (T,), Error = warp::Rejection> + Clone
+where
+    T: Send +  for<'de> Deserialize<'de>,
+{
     // When accepting a body, we want a JSON body
     // (and to reject huge payloads)...
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())

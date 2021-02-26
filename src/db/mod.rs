@@ -102,7 +102,7 @@ impl UserReward {
 #[crud_enable]
 #[derive(Debug, Clone)]
 pub struct DailyReward {
-    pub id: Option<String>,
+    pub id: Option<u64>,
     pub address: Option<String>,
 }
 

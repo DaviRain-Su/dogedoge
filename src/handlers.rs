@@ -277,7 +277,7 @@ pub async fn post_daily_reward(
                     ));
                 }
             } else {
-                log::debug!("    -> id already exists (address :{})", address);
+                log::debug!("    -> id already exists (address :{})", &address);
                 return Ok(get_response(
                     "daily reward already exists",
                     http::StatusCode::BAD_REQUEST,
