@@ -1,8 +1,8 @@
-use serde::Deserialize;
 use super::db::{ListOptions, Register, UserReward};
 use super::handlers;
 use crate::db::{Login1, Login2};
 use rbatis::rbatis::Rbatis;
+use serde::Deserialize;
 use std::sync::Arc;
 use warp::Filter;
 
@@ -31,6 +31,7 @@ pub fn login_by_uuid(
     warp::path!("login1")
         .and(warp::post())
         .and(json_body_for_login1())
+        // .add(generics_json_body::<Login1>())
         .and(with_db(db))
         .and_then(handlers::login_by_uuid)
 }
@@ -42,6 +43,7 @@ pub fn login_by_phone_number(
     warp::path!("login2")
         .and(warp::post())
         .and(json_body_for_login2())
+        // .add(generics_json_body::<Login2>())
         .and(with_db(db))
         .and_then(handlers::login_by_phone_number)
 }
@@ -65,6 +67,7 @@ pub fn register(
     warp::path!("register")
         .and(warp::post())
         .and(json_body())
+        // .add(generics_json_body::<Register>())
         .and(with_db(db))
         .and_then(handlers::create_user)
 }
@@ -74,10 +77,10 @@ pub fn register(
 pub fn update_password(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    // let router = String::from("update-password");
     warp::path!("user" / "password" / u64)
         .and(warp::put())
         .and(json_body())
+        // .add(generics_json_body::<Register>())
         .and(with_db(db))
         .and_then(handlers::update_user)
 }
@@ -87,10 +90,10 @@ pub fn update_password(
 pub fn update_web3_address(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    // let router = String::from("update-web3-address");
     warp::path!("user" / "web3address" / u64)
         .and(warp::put())
         .and(json_body())
+        // .add(generics_json_body::<Register>())
         .and(with_db(db))
         .and_then(handlers::update_user)
 }
@@ -100,10 +103,10 @@ pub fn update_web3_address(
 pub fn update_phone_number(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    // let router = String::from("update-phone-number");
     warp::path!("user" / "phonenumber" / u64)
         .and(warp::put())
         .and(json_body())
+        // .add(generics_json_body::<Register>())
         .and(with_db(db))
         .and_then(handlers::update_user)
 }
@@ -166,7 +169,7 @@ fn json_body() -> impl Filter<Extract = (Register,), Error = warp::Rejection> + 
 
 fn generics_json_body<T>() -> impl Filter<Extract = (T,), Error = warp::Rejection> + Clone
 where
-    T: Send +  for<'de> Deserialize<'de>,
+    T: Send + for<'de> Deserialize<'de>,
 {
     // When accepting a body, we want a JSON body
     // (and to reject huge payloads)...
