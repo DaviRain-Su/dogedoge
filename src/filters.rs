@@ -113,10 +113,10 @@ pub fn update_phone_number(
 pub fn get_daily_reward(
     db: Arc<Rbatis>,
 ) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::path!("daily-reward")
+    warp::path!("daily-reward" / String)
         .and(warp::get())
         .and(with_db(db))
-        .and_then(handlers::get_daily_reward)
+        .and_then(handlers::check_daily_reward)
 }
 
 // 插入当日奖励

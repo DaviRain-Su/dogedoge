@@ -215,27 +215,21 @@ pub async fn update_user(
     }
 }
 
-pub async fn get_daily_reward(
+pub async fn check_daily_reward(
+    address: String,
     db: Arc<Rbatis>,
 ) -> Result<impl warp::Reply, Infallible> {
-    log::debug!("get daily reward");
+    log::debug!("address: {}", address);
 
-    let daily_reward = db.fetch_list("").await;
-    if daily_reward.is_err() {
-        log::debug!("daily is empty!");
-        Ok(get_response(
-            warp::reply::json(&Vec::<Register>::new()),
-                    // "There is no daily address",
-            StatusCode::OK,
-        ))
-    } else {
-        let registers: Vec<UserReward> = daily_reward
-            .unwrap()
-            .into_iter()
-            .map(|val| UserReward::from(val))
-            .collect();
-        log::debug!("daily reward {:?}", registers);
-        Ok(get_response(warp::reply::json(&registers), StatusCode::OK))
+    let w = db.new_wrapper().eq("address", address);
+    let r: Result<Option<DailyReward>, Error> = db.fetch_by_wrapper("", &w).await;
+    match r {
+        Ok(res) if res.is_some() => {
+            return Ok(get_response("", http::StatusCode::FORBIDDEN));
+        }
+        _ => {
+            return Ok(get_response("", http::StatusCode::OK));
+        }
     }
 }
 
@@ -291,7 +285,7 @@ pub async fn post_daily_reward(
 pub async fn delete_user(id: u64, db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
     log::debug!("delete_register: id={}", id);
 
-    let delete_id = db.remove_by_id::<RegistersDB>("", &id.to_string()).await;
+    let delete_id = db.remove_by_id::<RegistersDB>("", &id).await;
     match delete_id {
         Ok(delete_id) => {
             log::debug!("delete_user: ret: {}, id: {}", delete_id, id);

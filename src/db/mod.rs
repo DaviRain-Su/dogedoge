@@ -13,7 +13,7 @@ use std::sync::Arc;
 #[crud_enable]
 #[derive(Clone, Debug)]
 pub struct RegistersDB {
-    pub id: Option<String>,
+    pub id: Option<u64>,
     pub uuid: Option<String>,
     pub phone_number: Option<String>,
     pub password: Option<String>,
@@ -72,7 +72,7 @@ pub struct Register {
 impl Register {
     pub fn from(register_db: RegistersDB) -> Self {
         Self {
-            id: register_db.id.unwrap().parse::<u64>().unwrap(),
+            id: register_db.id.unwrap(),
             uuid: register_db.uuid.unwrap(),
             phone_number: register_db.phone_number.unwrap(),
             password: register_db.password.unwrap(),
