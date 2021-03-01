@@ -3,7 +3,7 @@
 /// with the exact arguments we'd expect from each filter in the chain.
 /// No tuples are needed, it's auto flattened for the functions.
 use super::db::{
-    DailyReward, ListOptions, Login, Login1, Login2, Register, RegistersDB, UserReward,
+     ListOptions, Login, Login1, Login2, Register, RegistersDB,
 };
 use rbatis::crud::CRUD;
 use rbatis::rbatis::Rbatis;
@@ -228,82 +228,6 @@ pub async fn update_user(
             Ok(get_response("update success", http::StatusCode::OK))
         },
     )
-}
-
-pub async fn get_daily_reward(db: Arc<Rbatis>) -> Result<impl warp::Reply, Infallible> {
-    log::debug!("get daily reward");
-
-    let daily_reward: Result<Vec<DailyReward>, Error> = db.fetch_list("").await;
-
-    daily_reward.as_ref().map_or_else(
-        |_error| {
-            log::debug!("daily is empty!");
-            Ok(get_response(
-                warp::reply::json(&Vec::<Register>::new()),
-                StatusCode::OK,
-            ))
-        },
-        |_| {
-            let registers: Vec<UserReward> = daily_reward
-                .as_ref()
-                .unwrap()
-                .into_iter()
-                .map(|val| UserReward::from(val.clone()))
-                .collect();
-            log::debug!("daily reward {:?}", registers);
-            Ok(get_response(warp::reply::json(&registers), StatusCode::OK))
-        },
-    )
-}
-
-pub async fn post_daily_reward(
-    user_ward: UserReward,
-    db: Arc<Rbatis>,
-) -> Result<impl warp::Reply, Infallible> {
-    log::debug!("user ward : {:?}", user_ward);
-
-    let daily_reward_db = DailyReward::from(user_ward.clone());
-
-    let address = user_ward.address;
-    let w = db.new_wrapper().eq("address", &address);
-
-    let ret_daily_reward_db: Result<Vec<DailyReward>, Error> =
-        db.fetch_list_by_wrapper("", &w).await;
-    match ret_daily_reward_db {
-        Err(_err) => {
-            log::debug!("search daily reward by address error: {:?}", _err);
-            Ok(get_response(
-                "search daily reward by address error",
-                http::StatusCode::BAD_REQUEST,
-            ))
-        }
-        Ok(res) => {
-            if res.is_empty() {
-                let r = db.save("", &daily_reward_db).await;
-                r.map_or_else(
-                    |error| {
-                        log::debug!("daily_reward : {}", error);
-                        Ok(get_response(
-                            "create daily reward failed",
-                            http::StatusCode::NOT_FOUND,
-                        ))
-                    },
-                    |_ok| {
-                        Ok(get_response(
-                            "create daily reward success",
-                            http::StatusCode::CREATED,
-                        ))
-                    },
-                )
-            } else {
-                log::debug!("    -> id already exists (address :{})", &address);
-                Ok(get_response(
-                    "daily reward already exists",
-                    http::StatusCode::BAD_REQUEST,
-                ))
-            }
-        }
-    }
 }
 
 // 删除用户

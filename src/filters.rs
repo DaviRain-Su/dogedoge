@@ -1,4 +1,4 @@
-use super::db::{ListOptions, Register, UserReward};
+use super::db::{ListOptions, Register};
 use super::handlers;
 use crate::db::{Login1, Login2};
 use rbatis::rbatis::Rbatis;
@@ -19,8 +19,6 @@ pub fn main_logic(
         .or(update_phone_number(db.clone())) // 更新手机号
         .or(user_list(db.clone()))
         .or(delete_user(db.clone()))
-        .or(get_daily_reward(db.clone())) // 检查每日奖励
-        .or(post_daily_reward(db.clone())) // 插入每日奖励
 }
 
 // 登录逻辑
@@ -111,31 +109,6 @@ pub fn update_phone_number(
         .and_then(handlers::update_user)
 }
 
-// 查询是否已经获得日常奖励
-/// GET /daily-reward
-pub fn get_daily_reward(
-    db: Arc<Rbatis>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    warp::path!("daily-reward")
-        .and(warp::get())
-        .and(with_db(db))
-        .and_then(handlers::get_daily_reward)
-}
-
-// 插入当日奖励
-/// POST /daily-reward JSON body
-pub fn post_daily_reward(
-    db: Arc<Rbatis>,
-) -> impl Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
-    let admin_only = warp::header::exact("authorization", "Bearer admin");
-    warp::path!("daily-reward")
-        .and(admin_only)
-        .and(generics_json_body::<UserReward>())
-        .and(warp::post())
-        .and(with_db(db))
-        .and_then(handlers::post_daily_reward)
-}
-
 // 删除用户
 /// DELETE /user/:id
 pub fn delete_user(
@@ -167,7 +140,7 @@ fn json_body() -> impl Filter<Extract = (Register,), Error = warp::Rejection> + 
     warp::body::content_length_limit(1024 * 16).and(warp::body::json())
 }
 
-fn generics_json_body<T>() -> impl Filter<Extract = (T,), Error = warp::Rejection> + Clone
+fn _generics_json_body<T>() -> impl Filter<Extract = (T,), Error = warp::Rejection> + Clone
 where
     T: Send + for<'de> Deserialize<'de>,
 {
