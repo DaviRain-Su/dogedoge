@@ -57,38 +57,6 @@ impl Register {
     }
 }
 
-//**********************This is daily Reward***************************
-// this User Reward is for normal use.
-#[derive(Debug, Deserialize, Serialize, Clone, std::cmp::PartialEq)]
-pub struct UserReward {
-    pub address: String,
-}
-
-impl UserReward {
-    pub fn from(daily_reward: DailyReward) -> Self {
-        Self {
-            address: daily_reward.address.unwrap(),
-        }
-    }
-}
-
-// This Daily Reward is for database to use
-#[crud_enable]
-#[derive(Debug, Clone)]
-pub struct DailyReward {
-    pub id: Option<u64>,
-    pub address: Option<String>,
-}
-
-impl DailyReward {
-    pub fn from(user_reward: UserReward) -> Self {
-        Self {
-            id: None,
-            address: Some(user_reward.address),
-        }
-    }
-}
-
 // **********************This is for login**********************************
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum Login {
