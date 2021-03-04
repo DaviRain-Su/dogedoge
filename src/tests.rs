@@ -8,7 +8,7 @@ use super::{
 };
 
 #[tokio::test]
-async fn test_post() {
+async fn test_post_faild() {
     let db = db::init_rbatis().await;
     let api = filters::main_logic(db.clone());
     // let _ret = handlers::delete_user(1, db.clone()).await;
@@ -29,7 +29,7 @@ async fn test_post() {
         .reply(&api)
         .await;
 
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 }
 
 #[tokio::test]
