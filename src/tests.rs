@@ -12,7 +12,7 @@ async fn test_post() {
     let db = db::init_rbatis().await;
     let api = filters::main_logic(db.clone());
     // let _ret = handlers::delete_user(1, db.clone()).await;
-    let _delete_id = db.remove_by_id::<RegistersDB>("", &1.to_string()).await;
+    let _delete_id = db.remove_by_id::<RegistersDB>("", &1).await;
     // println!("ret = {:?}", _delete_id);
     let resp = request()
         .method("POST")

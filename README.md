@@ -1,5 +1,7 @@
 # dogedoge
 
+[![Build Status](https://travis-ci.org/DaviRain-Su/dogedoge.svg?branch=main)](https://travis-ci.org/DaviRain-Su/dogedoge)
+
 ## Build
 
 默认是编译debug模式
